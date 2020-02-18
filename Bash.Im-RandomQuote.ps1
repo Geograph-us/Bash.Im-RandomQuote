@@ -1,16 +1,16 @@
 <#
-    Выводит случайную цитату с сайта bash.im из "Лучшего" за неделю, используя RSS feed.
+	Выводит случайную цитату с сайта bash.im из "Лучшего" за неделю, используя RSS feed.
 	Выводит случайный комикс с сайта bash.im, используя RSS feed.
 
-    Чтобы цитата выводилась при запуске PowerShell - нужно добавить весь код из файла в файл профиля.
-    Открыть файл профиля (powershell команда):
-    notepad $profile
+	Чтобы цитата выводилась при запуске PowerShell - нужно добавить весь код из файла в файл профиля.
+	Открыть файл профиля (powershell команда):
+	notepad $profile
 
-    Если выходит ошибка, значит файла профиля еще нет - нужно его создать:
-    New-Item -path $profile -type file -force
+	Если выходит ошибка, значит файла профиля еще нет - нужно его создать:
+	New-Item -path $profile -type file -force
 
-    После чего открыть, добавить код и сохранить
-	
+	После чего открыть, добавить код и сохранить
+
 	Теперь можно использовать команды:
 	bashim #вывод случайной цитаты
 	comics #показ случайного комикса
@@ -25,8 +25,8 @@ $comicsfeed = Invoke-RestMethod -Uri "https://bash.im/rss/comics.xml"
 
 Function BashIm
 {
-  Write-Host $utils::HtmlDecode($rssfeed[(Get-Random $rssfeed.Count)].description.innerText).Replace("<br>", "`r`n") -foreground Yellow
-  echo ""
+	Write-Host $utils::HtmlDecode($rssfeed[(Get-Random $rssfeed.Count)].description.innerText).Replace("<br>", "`r`n") -foreground Yellow
+	echo ""
 }
 
 Function ShowImageUrl
