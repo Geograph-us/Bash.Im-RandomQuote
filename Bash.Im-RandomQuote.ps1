@@ -1,5 +1,6 @@
 <#
-    Выводим случайную цитату с сайта bash.im из "Лучшего" за последние 5 лет.
+    Выводит случайную цитату с сайта bash.im из "Лучшего" за неделю, используя RSS feed.
+	Выводит случайный комикс с сайта bash.im, используя RSS feed.
 
     Чтобы цитата выводилась при запуске PowerShell - нужно добавить весь код из файла в файл профиля.
     Открыть файл профиля (powershell команда):
@@ -9,35 +10,57 @@
     New-Item -path $profile -type file -force
 
     После чего открыть, добавить код и сохранить
+	
+	Теперь можно использовать команды:
+	bashim #вывод случайной цитаты
+	comics #показ случайного комикса
 #>
 
+Add-Type -assembly System.Windows.Forms
 Add-Type -AssemblyName System.Web
 $utils = [Web.HttpUtility]
-$wc = New-Object Net.WebClient
-$quoteslist = New-Object Collections.ArrayList
 
-$cur_year = Get-Date -uformat %Y
-$old_year = $cur_year - 5
+$rssfeed = Invoke-RestMethod -Uri "http://bash.im/rss/"
+$comicsfeed = Invoke-RestMethod -Uri "https://bash.im/rss/comics.xml"
 
-$url = "http://bash.im/bestyear/"
-
-for ([int] $i = $cur_year; $i -gt $old_year; $i--)
+Function BashIm
 {
-    $page = $wc.DownloadString($url + $i)
-    $matches = [regex]::Matches($page, "<div class=""text"">(.*?)</div>")
-
-    #$matches | ForEach-Object { $count = $quoteslist.Add($utils::HtmlDecode($_.Groups[1].Value.Replace("<br>", "`r`n"))) }
-
-    ForEach ($match in $matches)
-    {
-        $count = $quoteslist.Add($utils::HtmlDecode($match.Groups[1].Value.Replace("<br>", "`r`n")))
-    }
-}
-
-Function Bash # Функция, чтобы можно было вручную выводить случайную цитату
-{
-  Write-Host $quoteslist[(Get-Random $quoteslist.Count)] -foreground Yellow
+  Write-Host $utils::HtmlDecode($rssfeed[(Get-Random $rssfeed.Count)].description.innerText).Replace("<br>", "`r`n") -foreground Yellow
   echo ""
 }
 
-Bash
+Function ShowImageUrl
+{
+	param([string]$url = $(throw "Image url"))
+
+	[System.Windows.Forms.Application]::EnableVisualStyles();
+	$form = new-object Windows.Forms.Form
+	$form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
+	$form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
+	$form.AutoSizeMode = [System.Windows.Forms.AutoSizeMode]::GrowAndShrink
+	$form.AutoSize = $true
+	$form.TopMost = $true
+	$form.KeyPreview = $true
+	$form.Add_KeyDown({ if($_.KeyCode -eq "Escape") { $form.Close() } })
+	$form.Add_Shown({ $form.Activate() })
+
+	$pictureBox = new-object Windows.Forms.PictureBox
+	$pictureBox.AutoSize = $true
+	$pictureBox.Dock = [System.Windows.Forms.DockStyle]::Fill
+	try
+	{
+		$pictureBox.Load($url)
+		$pictureBox.Add_Click({ $form.Close() })
+		$form.controls.add($pictureBox)
+		$form.ShowDialog() | Out-Null
+	}
+	catch{}
+}
+
+Function Comics
+{
+	ShowImageUrl ($comicsfeed[(Get-Random $comicsfeed.Count)].description.innerText -replace '.+"(.+)".+',  '$1')	
+}
+
+bashim
+#comics
